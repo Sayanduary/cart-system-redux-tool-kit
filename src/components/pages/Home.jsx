@@ -1,7 +1,8 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { addToCart } from "../../redux functionality/cartSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, deleteCart } from "../../redux functionality/cartSlice";
+import { ToastContainer, toast } from "react-toastify";
 
 function Home() {
   const [product, setProduct] = useState([]);
@@ -31,6 +32,7 @@ function Home() {
           return <ProductCard data={obj} key={idx} />;
         })}
       </div>
+      <ToastContainer />
     </section>
   );
 }
@@ -38,9 +40,12 @@ function Home() {
 export default Home;
 
 export function ProductCard({ data }) {
-  let { title, price, thumbnail, description, id } = data;
+  let { title, price, thumbnail, description, id, discountPercentage } = data;
 
   let dispatch = useDispatch();
+  let cartItems = useSelector((store) => store.cartStore.cartCount);
+
+  let checkItemInCart = cartItems.find((item) => item.id === id);
 
   function addToCartItem() {
     let cart = {
@@ -50,8 +55,15 @@ export function ProductCard({ data }) {
       qty: 1,
       description,
       id,
+      discountPercentage,
     };
-    dispatch(addToCart({ cart }));
+    dispatch(addToCart({ cartObj: cart }));
+    toast.success("Item Added in the cart");
+  }
+
+  function removeFromCart() {
+    dispatch(deleteCart({ id }));
+    toast.info("Item Removed from cart");
   }
 
   return (
@@ -75,12 +87,21 @@ export function ProductCard({ data }) {
         <div className="flex items-center justify-between mt-2">
           <span className="text-xl font-bold text-emerald-600">₹ {price}</span>
 
-          <button
-            className="rounded-xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700 active:scale-95"
-            onClick={addToCartItem}
-          >
-            Add to Cart
-          </button>
+          {checkItemInCart ? (
+            <button
+              className="rounded-xl bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 active:scale-95"
+              onClick={removeFromCart}
+            >
+              Remove From Cart
+            </button>
+          ) : (
+            <button
+              className="rounded-xl bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700 active:scale-95"
+              onClick={addToCartItem}
+            >
+              Add to Cart
+            </button>
+          )}
         </div>
       </div>
     </div>

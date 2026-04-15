@@ -1,13 +1,35 @@
+import { useDispatch, useSelector } from "react-redux";
+import {
+  deleteCart,
+  changeQty as changeCartQty,
+} from "../../redux functionality/cartSlice";
+
 function Cart() {
+  let cartItems = useSelector((items) => items.cartStore.cartCount);
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const savings = cartItems.reduce((sum, item) => {
+    const discount = item.discountPercentage || 0;
+    return sum + item.price * item.qty * (discount / 100);
+  }, 0);
+  const shipping = cartItems.length > 0 ? 99 : 0;
+  const tax = subtotal * 0.05;
+  const total = subtotal - savings + shipping + tax;
+
   return (
     <section className="bg-white py-8 antialiased md:py-16">
-      <div className="mx-auto max-w-screen-xl px-4 2xl:px-0">
+      <div className="mx-auto max-w-7xl px-4 2xl:px-0">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
           Shopping Cart
         </h2>
         <div className="mt-6 sm:mt-8 md:gap-6 lg:flex lg:items-start xl:gap-8">
           <div className="mx-auto w-full flex-none lg:max-w-2xl xl:max-w-4xl">
-            <CartProducts />
+            {cartItems.length > 0 ? (
+              cartItems.map((cardObj, idx) => (
+                <CartProducts key={idx} cartObject={cardObj} />
+              ))
+            ) : (
+              <p className="flex justify-center">No Data found in cart</p>
+            )}
           </div>
 
           <div className="mx-auto mt-6 max-w-4xl flex-1 space-y-6 lg:mt-0 lg:w-full">
@@ -22,7 +44,7 @@ function Cart() {
                       Original price
                     </dt>
                     <dd className="text-base font-medium text-gray-900 dark:text-white">
-                      $7,592.00
+                      ₹ {subtotal.toFixed(2)}
                     </dd>
                   </dl>
                   <dl className="flex items-center justify-between gap-4">
@@ -30,7 +52,7 @@ function Cart() {
                       Savings
                     </dt>
                     <dd className="text-base font-medium text-green-600">
-                      -$299.00
+                      -₹ {savings.toFixed(2)}
                     </dd>
                   </dl>
                   <dl className="flex items-center justify-between gap-4">
@@ -38,7 +60,7 @@ function Cart() {
                       Store Pickup
                     </dt>
                     <dd className="text-base font-medium text-gray-900 dark:text-white">
-                      $99
+                      ₹ {shipping.toFixed(2)}
                     </dd>
                   </dl>
                   <dl className="flex items-center justify-between gap-4">
@@ -46,7 +68,7 @@ function Cart() {
                       Tax
                     </dt>
                     <dd className="text-base font-medium text-gray-900 dark:text-white">
-                      $799
+                      ₹ {tax.toFixed(2)}
                     </dd>
                   </dl>
                 </div>
@@ -55,7 +77,7 @@ function Cart() {
                     Total
                   </dt>
                   <dd className="text-base font-bold text-gray-900 dark:text-white">
-                    $8,191.00
+                    ₹ {total.toFixed(2)}
                   </dd>
                 </dl>
               </div>
@@ -103,20 +125,33 @@ function Cart() {
 
 export default Cart;
 
-function CartProducts() {
+function CartProducts({ cartObject }) {
+  let dispatch = useDispatch();
+
+  let { id, qty } = cartObject;
+  function removeFromCart() {
+    dispatch(deleteCart({ id }));
+  }
+  let finalQty = qty;
+  function handleQtyChange(type) {
+    if (type === "+") {
+      finalQty = qty + 1;
+    } else {
+      if (qty > 1) {
+        finalQty = qty - 1;
+      }
+    }
+    dispatch(changeCartQty({ id, finalQty }));
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:p-6">
         <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-6 md:space-y-0">
           <a href="#" className="shrink-0 md:order-1">
             <img
-              className="h-20 w-20 dark:hidden"
-              src="https://flowbite.s3.amazonaws.com/blocks/e-commerce/imac-front.svg"
-              alt="imac image"
-            />
-            <img
               className="hidden h-20 w-20 dark:block"
-              src="https://flowbite.s3.amazonaws.com/blocks/e-commerce/imac-front-dark.svg"
+              src={cartObject.image}
               alt="imac image"
             />
           </a>
@@ -127,6 +162,9 @@ function CartProducts() {
             <div className="flex items-center">
               <button
                 type="button"
+                onClick={() => {
+                  handleQtyChange("-");
+                }}
                 id="decrement-button"
                 data-input-counter-decrement="counter-input"
                 className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700"
@@ -153,11 +191,15 @@ function CartProducts() {
                 data-input-counter=""
                 className="w-10 shrink-0 border-0 bg-transparent text-center text-sm font-medium text-gray-900 focus:outline-none focus:ring-0 dark:text-white"
                 placeholder=""
-                defaultValue={2}
+                value={cartObject.qty}
+                readOnly
                 required=""
               />
               <button
                 type="button"
+                onClick={() => {
+                  handleQtyChange("+");
+                }}
                 id="increment-button"
                 data-input-counter-increment="counter-input"
                 className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700"
@@ -181,7 +223,7 @@ function CartProducts() {
             </div>
             <div className="text-end md:order-4 md:w-32">
               <p className="text-base font-bold text-gray-900 dark:text-white">
-                $1,499
+                {cartObject.price * cartObject.qty}
               </p>
             </div>
           </div>
@@ -190,8 +232,7 @@ function CartProducts() {
               href="#"
               className="text-base font-medium text-gray-900 hover:underline dark:text-white"
             >
-              PC system All in One APPLE iMac (2023) mqrq3ro/a, Apple M3, 24"
-              Retina 4.5K, 8GB, SSD 256GB, 10-core GPU, Keyboard layout INT
+              {cartObject.description}
             </a>
             <div className="flex items-center gap-4">
               <button
@@ -218,6 +259,7 @@ function CartProducts() {
                 Add to Favorites
               </button>
               <button
+                onClick={removeFromCart}
                 type="button"
                 className="inline-flex items-center text-sm font-medium text-red-600 hover:underline dark:text-red-500"
               >
