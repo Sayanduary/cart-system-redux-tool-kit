@@ -1,16 +1,76 @@
-# React + Vite
+# EcomApp (React + Redux Toolkit)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Short interview documentation for this frontend project.
 
-Currently, two official plugins are available:
+## 1) Project Summary
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+EcomApp is a small e-commerce frontend built with React, React Router, and Redux Toolkit.
 
-## React Compiler
+Main user flow:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Browse products on Home page (fetched from DummyJSON API)
+- Add or remove products from cart
+- Change quantity in cart
+- See live totals (subtotal, savings, tax, shipping)
 
-## Expanding the ESLint configuration
+## 2) Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React + Vite
+- React Router
+- Redux Toolkit + React Redux
+- Axios
+- Tailwind CSS
+
+## 3) How Redux Works In This Project
+
+State management is centralized in a Redux store with two slices:
+
+- `counterStore` (learning/demo slice)
+- `cartStore` (real business state)
+
+Cart state shape:
+
+- `cartCount`: array of cart items
+
+Redux flow used here:
+
+1. UI event triggers `dispatch(...)` (example: Add to Cart button)
+2. Action goes to reducer in `cartSlice`
+3. Reducer updates state (Immer allows simple mutable-style code)
+4. Updated state is persisted to `localStorage`
+5. Components re-render automatically through `useSelector`
+
+Implemented cart actions:
+
+- `addToCart`
+- `deleteCart`
+- `changeQty`
+
+Persistence strategy:
+
+- Initial state is hydrated from `localStorage` (`CART` key)
+- Every cart update writes back to `localStorage`
+- This keeps cart data after page refresh
+
+## 4) Why I Chose Redux Toolkit
+
+I chose Redux Toolkit because:
+
+- Predictable global state: cart data is shared across Header, Home, and Cart without prop drilling.
+- Cleaner architecture: business logic (add/remove/change qty) is in one place instead of duplicated in components.
+- Easy debugging: actions and reducers make state transitions explicit.
+- Scalable pattern: adding wishlist/auth/order slices later is straightforward.
+- Better DX: Redux Toolkit reduces boilerplate compared to classic Redux.
+
+In short: for an e-commerce app, cart is cross-page, frequently updated, and business-critical. Redux Toolkit is a reliable fit for that type of state.
+
+## 5) What I Would Improve Next
+
+- Prevent duplicate cart items by increasing quantity instead of adding another row.
+- Move `localStorage` side effects from reducers to middleware/listeners (cleaner Redux pattern).
+- Add loading/error states for product fetch.
+- Add unit tests for reducers and integration tests for cart flows.
+
+## 6) 30-Second Interview Pitch
+
+"This is a React e-commerce frontend where I implemented a centralized cart with Redux Toolkit. I used slices to isolate state logic and React Redux hooks to connect UI with store updates. Cart state is persisted in localStorage, so data survives refresh. I chose Redux because cart data is shared across multiple pages and needs predictable updates, easy scaling, and maintainable business logic."
